@@ -57,7 +57,7 @@ Q_after11 = -m*b*l*cos(2*alpha)
 Q_before = Matrix([[Q_before00, Q_before01],[Q_before10, Q_before11]])
 Q_after = Matrix([[Q_after00, Q_after01],[Q_after10, Q_after11]])
 
-W = simplify(Q_after.inv() * Q_before)
+P = simplify(Q_after.inv() * Q_before)
 
 # Pretty printing
 
@@ -91,5 +91,36 @@ print('Expression for swing leg:')
 print(qdd0)
 print('Expression for standing leg:')
 print(qdd1)
-print('Expression for W')
-print(W)
+print('Expression for P')
+print(P)
+
+# Pointcare Map Derivation
+
+W = Matrix([[0, 1, 0, 0],
+            [1, 0, 0, 0],
+            [0, 0, P[0, 0], P[0, 1]],
+            [0, 0, P[1, 0], P[1, 1]]])
+
+print 'P and W'
+pprint(P)
+pprint(W)
+
+A = Matrix([[0, 0, 1, 0],
+            [0, 0, 0, 1],
+            [-23.91, 25.73, 0, 0],
+            [-4.54, 15.44, 0, 0]])
+
+T = symbols('T') 
+stm = mpmath.expm(A*T)
+print 'State Transition Matrix'
+stmSym = Matrix(stm)
+pprint(stmSym)
+
+D = dot(W, stmSym)
+pprint(D)
+
+
+
+
+
+

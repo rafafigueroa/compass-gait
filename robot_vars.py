@@ -1,14 +1,13 @@
- #!/usr/bin/env python
- # -*- coding: utf-8 -*-
- """
- @author: Rafael Figueroa
- """
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+@author: Rafael Figueroa
+"""
 
-m = 0.2
-M = 0.6
-a = 0.3
-b = 0.7
+m = 5
+M = 10
+a = 0.4
+b = 0.6
 l = a + b
 g = 9.81
-gamma = 0.7854  # Approx pi/4 
-
+gamma = 1.5 * (3.1416 / 180.0) 
