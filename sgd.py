@@ -26,10 +26,11 @@ def normal_noise(sigma, states):
     """ Draw normal noise """
     return np.random.normal(0, sigma, states)   
 
-def poincare_map_compass(path):
+def poincare_map_compass_st(path):
     """ Records the crossing values of the surface of section """
-    hst_path = path[:, 1]
-    hdst_path = path[:, 3]
+    #TODO: improve algorithm to remove copy
+    hst_path = np.copy(path[:, 1])
+    hdst_path = np.copy(path[:, 3])
     hst_sign = np.sign(hst_path)
     hst_zeros = np.where(hst_sign == 0)[0]
     # Remove the zeros in all arrays to 
@@ -54,30 +55,65 @@ def poincare_map_compass(path):
     # print "hdst_poincare_vals", hdst_poincare_vals
 
     return hdst_poincare_vals
+ 
+def poincare_map_compass_sw(path):
+    """ Records the crossing values of the surface of section """
+    hsw_path = np.copy(path[:, 0])
+    hdsw_path = np.copy(path[:, 2])
+    hsw_sign = np.sign(hsw_path)
+    hsw_zeros = np.where(hsw_sign == 0)[0]
+    # Remove the zeros in all arrays to 
+    # mantain consistency of index
+    np.delete(hsw_sign, hsw_zeros)
+    np.delete(hsw_path, hsw_zeros)
+    np.delete(hdsw_path, hsw_zeros)
+
+    # Check for sign change, but only from positive to negative
+    # defining the surface of section as hsw = 0 when it
+    # crosses from positive to negative
+    hsw_sign_change = ((hsw_sign - np.roll(hsw_sign, -1)) < 0).astype(int)
+    # np.roll compares the last with the first, so the last  result
+    # is not meaningless in this problem
+    hsw_sign_change[-1] = 0
+
+    # These are the values at the surface of section crossing
+    # Just before it crosses
+    hsw_poincare_vals = hsw_path[np.nonzero(hsw_sign_change)]
+    # print "hst_poincare_vals", hst_poincare_vals
+    hdsw_poincare_vals = hdsw_path[np.nonzero(hsw_sign_change)]
+    # print "hdst_poincare_vals", hdst_poincare_vals
+
+    return hdsw_poincare_vals
     
+   
 def J(a):
     """ Cost Function """
     u0 = compass_gait_model.u0
-    simResult = h.sim(qID = 0, X = a, u = u0, t0 = 0, tlim = 3, 
-                  debug_flag = False, Ts = 1e-3)
+    simResult = h.sim(qID = 0, X = np.copy(a), u = u0, t0 = 0, tlim = 3, 
+                  debug_flag = False)#, Ts = 1e-3)
 
     simPath = simResult.path
-    poincare_vals = poincare_map_compass(simPath)
+    # print 'simpath', simPath
+    poincare_vals_st = poincare_map_compass_st(simPath)
+    poincare_vals_sw = poincare_map_compass_sw(simPath)
+    # print 'pm sw', poincare_vals_sw
 
     # The cost function is the difference between them
-    if len(poincare_vals) >= 3:
-        J_all = np.linalg.norm(np.roll(poincare_vals, 1) - poincare_vals) 
-        J_last = np.abs(poincare_vals[-1] - poincare_vals[-2])
-        J_first = np.abs(poincare_vals[0] - poincare_vals[1])
-        return J_first + J_all
+    if len(poincare_vals_st) >= 3 and len(poincare_vals_sw) >= 3:
+        J_all_st = np.linalg.norm(np.roll(poincare_vals_st, 1) - poincare_vals_st) 
+        J_all_sw = np.linalg.norm(np.roll(poincare_vals_sw, 1) - poincare_vals_sw)
+        # J_last = np.abs(poincare_vals[-1] - poincare_vals[-2])
+        # J_first = np.abs(poincare_vals[0] - poincare_vals[1])
+        return (J_all_sw)/2.0
 
     else:
         # penalize taking less steps!
-        return 1
+        print 'penalty condition'
+        return 2
 
-def run_sgd(a0, sigma = 0.1, eta = 0.004, states = 4):
+def run_sgd(a0, sigma = 0.05, eta = 0.002, states = 4):
     # Parameters
-    a = a0
+    a = np.copy(a0)
     # Get cost baseline
     Jb = J(a)
     Jmin = Jb
@@ -97,8 +133,8 @@ def run_sgd(a0, sigma = 0.1, eta = 0.004, states = 4):
         Jb = J(a)
 
         # J_list.append(Jb)
-        eta = eta/1.02
-        sigma = sigma/1.05
+        eta = eta/1.08
+        sigma = sigma/1.06
 
         # print Jb, eta, a 
         if Jb < Jmin:
@@ -113,7 +149,9 @@ def run_sgd(a0, sigma = 0.1, eta = 0.004, states = 4):
 
 if __name__ == '__main__': 
     # [-0.22402108, 0.16131208, 0.6, -1.0 ]
-    a0 = np.array([-0.22, 0.16, 0.6, -1.0])
+    #[-0.22, 0.16, 0.6, -1.0]
+    # [-0.22369904, 0.16082207, 0.6009526, -1.00018365]
+    a0 = np.array([-0.22402108, 0.16131208, 0.6, -1.0 ])
     a, Jmin = run_sgd(a0)
     print a, Jmin
 
