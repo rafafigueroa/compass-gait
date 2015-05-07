@@ -111,9 +111,10 @@ class H:
             qID_activated_g = oe[oID_activated_g]
 
             #guard activated print out
-            print 'sim -- guard activated'
-            print 'sim -- from q =', q.qID, 'to q =', qID_activated_g
-            print 'sim -- State =', X
+            if DEBUG:
+                print 'sim -- guard activated'
+                print 'sim -- from q =', q.qID, 'to q =', qID_activated_g
+                print 'sim -- State =', X
 
             #get new q
             q = self.q[qID_activated_g]

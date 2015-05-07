@@ -55,7 +55,7 @@ def r0(X):
     hdsw = X[2]
     hdst = X[3]
 
-    print 'reset map Xold:', X
+    # print 'reset map Xold:', X
 
     Pl = [[-a*l*m*cos(1.0*hst - hsw)/(M*l**2 + a**2*m - l**2*m*cos(1.0*hst - \
         hsw)**2 + l**2*m), (-M*a*l**2 + M*l**3*cos(1.0*hst - hsw)**2 - \
@@ -68,7 +68,7 @@ def r0(X):
     P = np.array(Pl)
     J = np.array([[0, 1], [1, 0]])
 
-    print 'reset map P:', P
+    # print 'reset map P:', P
 
     # q = [hsw, hst] transposed
     # dq = [hdsw, hdst] transposed
@@ -82,7 +82,7 @@ def r0(X):
     dq = np.dot(P, dq_old.transpose())
 
     Xnew = np.hstack((q, dq))
-    print 'reset map Xnew:', Xnew
+    # print 'reset map Xnew:', Xnew
 
     return Xnew
 
@@ -114,18 +114,20 @@ init_qID = 0
 states = ['\theta_{sw}', '\theta_{st}', 
           '\dot{\theta}_{sw}', '\dot{\theta}_{st}']
 
-h = H([q0], Init_X = init_X, Init_qID = init_qID, state_names = states )
+h = H([q0], Init_X = init_X, Init_qID = init_qID, 
+      state_names = states )
 
 simResult = h.sim(qID = 0, X = init_X, u = u0, t0 = 0, tlim = 3, 
                   debug_flag = False)
 
-simResult.simPlot()
-# simResult.phasePlot([0, 2])
-simResult.phasePlot([1, 3])
 simPath = simResult.path
 
-# raw_input('\n Press ENTER to close plots')
+def show_plots():
+    simResult.simPlot()
+    simResult.phasePlot([0, 2])
+    simResult.phasePlot([1, 3])
 
+    raw_input('\n Press ENTER to close plots')
 def point0(hst, hsw):
     """Standing leg foot position and origin"""
     p0x = 0
@@ -143,11 +145,6 @@ def point4(hst, hsw):
     p4x = l*(sin(hsw)-sin(hst))
     p4y = l*(cos(hst)-cos(hsw))
     return np.array([p4x, p4y])
-
-fig1 = plt.figure()
-leg1, = plt.plot([], [], 'r-', lw=3)
-leg2, = plt.plot([], [], 'b-', lw=3)
-ground, = plt.plot([- 2*l*cos(gamma), 2*l*cos(gamma)], [2*l*sin(gamma), -2*l*sin(gamma)], 'k-', lw=5)
 
 def update_line(frame_id):
     """Updates leg positions on existing animation plot"""
@@ -172,19 +169,33 @@ def animation_init():
     leg2.set_data([], [])
     return [leg1, leg2]
 
-plt.xlim(-2, 2)
-plt.ylim(-2, 2)
-plt.xlabel('x')
-plt.title('leg test')
+def animate_walking():
+    plt.xlim(-2, 2)
+    plt.ylim(-2, 2)
+    plt.xlabel('x')
+    plt.title('leg test')
 
-# interval in ms, Ts in seconds
-# running 100 times faster
-legs_ani = animation.FuncAnimation(fig1, update_line, len(simPath),
-                                   init_func = animation_init,
-                                   interval = 0.0, 
-                                   blit = True,
-                                   repeat = False)
-# h.Ts*1000/1000.0
-plt.show()
+    global leg1, leg2, ground
+    fig1 = plt.figure()
+    leg1, = plt.plot([], [], 'r-', lw=3)
+    leg2, = plt.plot([], [], 'b-', lw=3)
+    ground, = plt.plot([- 2*l*cos(gamma),
+                        2*l*cos(gamma)], 
+                        [2*l*sin(gamma), 
+                        -2*l*sin(gamma)], 'k-', lw=5)
 
-raw_input('\n Press ENTER to close plots')
+
+    # interval in ms, Ts in seconds
+    # running 100 times faster
+    legs_ani = animation.FuncAnimation(fig1, update_line, len(simPath),
+                                       init_func = animation_init,
+                                       interval = 0.0, 
+                                       blit = True,
+                                       repeat = False)
+
+    plt.show()
+
+    raw_input('\n Press ENTER to close plots')
+
+
+
